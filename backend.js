@@ -4,12 +4,15 @@
 // Optional. You will see this name in eg. 'ps' or 'top' command
 process.title = 'node-chat';
 
+var secret = "6LfBIRgUAAAAAKq1ttFOV1VRp_LY5AAtuEHkTxDU";
 var maxMessageLength = 140;
 // Port where we'll run the websocket server
 var webSocketsServerPort = 1337;
 
 // websocket and http servers
 var webSocketServer = require('websocket').server;
+var querystring = require('querystring');
+var requestLibrary = require('request');
 var http = require('http');
 var url = require("url");
 var fs   = require('fs');
@@ -83,6 +86,16 @@ wsServer.on('request', function(request) {
                 sendToAll("message", { text: htmlEntities(json.text), author: client.userName, color: client.color }, true);
               }
               break;
+          case "whisper":
+              if(json.text.length <= maxMessageLength){
+                console.log(' Received whisper from ' + client.userName + ': ' + json.text);
+                whisper(json);
+              }
+              break;
+          case "captchaToken":
+              console.log("Recieved request to verify captcha");
+              verifyCaptcha(json.text);
+              break;
           case "connection":
               console.log("Attempting to join room " + json.room);
               room = getRoomByID(json.room);
@@ -108,13 +121,13 @@ wsServer.on('request', function(request) {
               client.color = json.color;
               break;
           default:
-            console.log("Message type not recognized");
+            console.log("Message type not recognized:" + json.type + json.text);
         }
     });
 
     // user disconnected
     connection.on('close', function(connection) {
-        if (client.userName !== false) {
+        if (client.userName !== false && client.userName != null) {
             console.log(" Peer " + client.userName + " disconnected.");
 
             console.log("removing " + client.userName + " from clientIDs");
@@ -151,5 +164,47 @@ wsServer.on('request', function(request) {
       for (var i=0; i < room.clients.length; i++) {
           room.clients[i].connection.sendUTF(json);
       }
+    }
+
+    function whisper(json){
+      if(inArrayCaseInsensitive(json.targetUser, room.clients) != -1){
+        json.color = client.color;
+        json.author = client.userName;
+        var message = JSON.stringify(json);
+        console.log("username found sending message" + json.text);
+        room.clients[inArrayCaseInsensitive(json.targetUser, room.clients)].connection.sendUTF(message);
+        client.connection.sendUTF(message);
+      }
+      else{
+        console.log("failed to find username " + json.targetUser + " in list of usernames");
+      }
+    }
+
+    function inArrayCaseInsensitive(searchValue, searchArray){
+      var defaultResult = -1;
+      var result = defaultResult;
+      searchArray.forEach(function(element, index, array) {
+          if (result == defaultResult && searchValue.toLowerCase() == element.userName.toLowerCase()) {
+              result = index;
+          }
+      });
+      return result;
+    }
+
+    function verifyCaptcha(token){
+      var verificationUrl = "https://www.google.com/recaptcha/api/siteverify?secret=" + secret + "&response=" + token;
+
+      requestLibrary(verificationUrl,function(error,response,body) {
+        body = JSON.parse(body);
+
+        if(body.success !== undefined && !body.success) {
+          console.log("sending captcha failure");
+          connection.sendUTF(JSON.stringify({type: "captchaVerification", data: "failed"}));
+        }
+        else{
+          console.log("sending captcha success");
+          connection.sendUTF(JSON.stringify({type: "captchaVerification", data: "success"}));
+        }
+      });
     }
 });

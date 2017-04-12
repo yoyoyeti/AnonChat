@@ -4,28 +4,26 @@
     <title></title>
     <meta charset="utf-8">
     <link rel="stylesheet" href="main.css">
+    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+    <script src="frontend.js"></script>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   </head>
   <body>
-
     <div id="chat">
       <div id="wrapper">
         <div id="garbage">
-
         </div>
+        <div class="g-recaptcha" data-callback="verifyCaptcha" data-sitekey="6LfBIRgUAAAAALawx7qhgOyow6VUxZoII-fV5a3j"></div>
       </div>
       <p id="currentUsers" title="current users"></p>
       <div id="inputWrapper">
         <div id="more">
           <p>click to show new messages</p>
         </div>
-        <input type="text" id="input" disabled="disabled" placeholder="Typing as " />
+        <input type="text" id="input" disabled="disabled" placeholder="please complete the captcha before entering this chat " />
         <p id="suggestion"></p>
-
         <p id="characterLimit">140</p>
       </div>
     </div>
-
-    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
-    <script src="frontend.js"></script>
   </body>
 </html>
