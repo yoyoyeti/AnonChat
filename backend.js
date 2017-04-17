@@ -4,7 +4,7 @@
 // Optional. You will see this name in eg. 'ps' or 'top' command
 process.title = 'node-chat';
 
-var secret = "6LfBIRgUAAAAAKq1ttFOV1VRp_LY5AAtuEHkTxDU";
+var secret = "secret";
 var maxMessageLength = 140;
 // Port where we'll run the websocket server
 var webSocketsServerPort = 1337;
